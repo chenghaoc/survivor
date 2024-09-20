@@ -158,7 +158,6 @@ class Game {
 
     if (this.isChoosingPowerUp) {
       this.renderer.drawPowerUpUI(this.availablePowerUps);
-      this.gameLoopId = requestAnimationFrame(() => this.gameLoop());
       return;
     }
 
