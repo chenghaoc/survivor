@@ -11,6 +11,12 @@ class Player {
     this.invincibilityFrames = 0;
     this.bulletSize = CONFIG.bullet.radius;
     this.bulletSpeed = CONFIG.bullet.speed;
+    this.bulletTypes = ["normal"];
+    this.spreadShotUnlocked = false;
+    this.piercingShotUnlocked = false;
+    this.explosiveShotUnlocked = false;
+    this.currentBulletTypeIndex = 0;
+    this.unlockedBulletTypes = ["normal"];
   }
 
   move(dx, dy) {
@@ -24,31 +30,115 @@ class Player {
     );
   }
 
+  cycleBulletType() {
+    this.currentBulletTypeIndex =
+      (this.currentBulletTypeIndex + 1) % this.bulletTypes.length;
+  }
+
   shoot(enemies) {
     if (this.shootCooldown <= 0 && enemies.length > 0) {
-      let closestEnemy = enemies[0];
-      let closestDistance = Infinity;
+      this.shootCooldown = this.shootInterval;
 
-      for (let enemy of enemies) {
-        let distance = Math.hypot(enemy.x - this.x, enemy.y - this.y);
-        if (distance < closestDistance) {
-          closestEnemy = enemy;
-          closestDistance = distance;
+      let bullets = [];
+      for (let bulletType of this.unlockedBulletTypes) {
+        switch (bulletType) {
+          case "spread":
+            bullets = bullets.concat(this.shootSpread(enemies));
+            break;
+          case "piercing":
+            bullets.push(this.shootPiercing(enemies));
+            break;
+          case "explosive":
+            bullets.push(this.shootExplosive(enemies));
+            break;
+          default:
+            bullets.push(this.shootNormal(enemies));
         }
       }
-
-      this.shootCooldown = this.shootInterval;
-      return new Bullet(
-        this.x,
-        this.y,
-        closestEnemy,
-        this.bulletSize,
-        this.bulletSpeed
-      );
+      return bullets;
     } else {
       this.shootCooldown--;
       return null;
     }
+  }
+
+  shootNormal(enemies) {
+    let closestEnemy = enemies[0];
+    let closestDistance = Infinity;
+
+    for (let enemy of enemies) {
+      let distance = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+      if (distance < closestDistance) {
+        closestEnemy = enemy;
+        closestDistance = distance;
+      }
+    }
+
+    this.shootCooldown = this.shootInterval;
+    return new Bullet(
+      this.x,
+      this.y,
+      closestEnemy,
+      this.bulletSize,
+      this.bulletSpeed,
+      "normal"
+    );
+  }
+
+  shootSpread(enemies) {
+    let bullets = [];
+    const angles = [-15, 0, 15]; // Spread angles in degrees
+    for (let angle of angles) {
+      const radAngle = (angle * Math.PI) / 180;
+      const adjustedTarget = {
+        x:
+          Math.cos(radAngle) * (enemies[0].x - this.x) -
+          Math.sin(radAngle) * (enemies[0].y - this.y) +
+          this.x,
+        y:
+          Math.sin(radAngle) * (enemies[0].x - this.x) +
+          Math.cos(radAngle) * (enemies[0].y - this.y) +
+          this.y,
+      };
+      bullets.push(
+        new Bullet(
+          this.x,
+          this.y,
+          adjustedTarget,
+          this.bulletSize,
+          this.bulletSpeed,
+          "spread"
+        )
+      );
+    }
+    return bullets;
+  }
+
+  shootPiercing(enemies) {
+    let closestEnemy = enemies[0];
+    let closestDistance = Infinity;
+
+    for (let enemy of enemies) {
+      let distance = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+      if (distance < closestDistance) {
+        closestEnemy = enemy;
+        closestDistance = distance;
+      }
+    }
+
+    return new Bullet(
+      this.x,
+      this.y,
+      closestEnemy,
+      this.bulletSize * 1.2,
+      this.bulletSpeed * 1.5,
+      "piercing"
+    );
+  }
+
+  shootExplosive(enemies) {
+    // Implement explosive shot logic
+    return this.shootNormal(enemies);
   }
 
   takeDamage(amount) {
@@ -124,12 +214,13 @@ class Enemy {
 }
 
 class Bullet {
-  constructor(x, y, target, radius, speed) {
+  constructor(x, y, target, radius, speed, type) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.speed = speed;
     this.target = target;
+    this.type = type;
   }
 
   move() {

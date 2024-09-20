@@ -21,6 +21,21 @@ class PowerUpManager {
       case "bulletSpeed":
         player.bulletSpeed *= powerUp.multiplier;
         break;
+      case "spreadShot":
+        if (!player.unlockedBulletTypes.includes("spread")) {
+          player.unlockedBulletTypes.push("spread");
+        }
+        break;
+      case "piercingShot":
+        if (!player.unlockedBulletTypes.includes("piercing")) {
+          player.unlockedBulletTypes.push("piercing");
+        }
+        break;
+      case "explosiveShot":
+        if (!player.unlockedBulletTypes.includes("explosive")) {
+          player.unlockedBulletTypes.push("explosive");
+        }
+        break;
     }
   }
 

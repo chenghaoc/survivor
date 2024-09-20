@@ -6,7 +6,6 @@ class Game {
 
     this.renderer = new Renderer(this.canvas);
     this.powerUpManager = new PowerUpManager();
-    console.log(this.canvas.width, this.canvas.height);
     this.player = new Player(this.canvas.width / 2, this.canvas.height / 2);
     this.enemies = [];
     this.bullets = [];
@@ -35,6 +34,9 @@ class Game {
 
   handleKeyDown(e) {
     this.keys[e.code] = true;
+    if (e.code === "KeyQ") {
+      this.player.cycleBulletType();
+    }
   }
 
   handleKeyUp(e) {
@@ -148,7 +150,6 @@ class Game {
       (this.keys["ArrowDown"] || this.keys["KeyS"] ? 1 : 0) -
       (this.keys["ArrowUp"] || this.keys["KeyW"] ? 1 : 0);
 
-    console.log(dx);
     this.player.move(dx, dy);
   }
 
@@ -165,9 +166,9 @@ class Game {
     this.player.update();
     this.renderer.drawPlayer(this.player, this.powerUpManager.activePowerUp);
 
-    const newBullet = this.player.shoot(this.enemies);
-    if (newBullet) {
-      this.bullets.push(newBullet);
+    const newBullets = this.player.shoot(this.enemies);
+    if (newBullets) {
+      this.bullets = this.bullets.concat(newBullets);
     }
 
     this.updateBullets();
@@ -189,6 +190,8 @@ class Game {
         return false;
       }
 
+      let shouldRemoveBullet = false;
+
       for (let i = this.enemies.length - 1; i >= 0; i--) {
         const enemy = this.enemies[i];
         if (bullet.isCollidingWith(enemy)) {
@@ -206,11 +209,20 @@ class Game {
           } else {
             this.score += CONFIG.scoring.enemyHit;
           }
-          return false;
+
+          if (bullet.type !== "piercing") {
+            shouldRemoveBullet = true;
+          }
+
+          if (bullet.type === "explosive") {
+            // Implement explosion logic
+          }
+
+          if (shouldRemoveBullet) break;
         }
       }
 
-      return true;
+      return !shouldRemoveBullet;
     });
   }
 

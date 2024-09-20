@@ -35,6 +35,15 @@ class Renderer {
       healthBarHeight
     );
 
+    this.ctx.font = "12px Arial";
+    this.ctx.fillStyle = "white";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText(
+      `Bullets: ${player.unlockedBulletTypes.join(", ")}`,
+      player.x,
+      player.y + player.radius + 40
+    );
+
     // Draw power-up indicator
     if (activePowerUp) {
       this.ctx.font = "12px Arial";
@@ -59,11 +68,25 @@ class Renderer {
   drawBullet(bullet) {
     this.ctx.beginPath();
     this.ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-    this.ctx.fillStyle = "yellow";
+
+    switch (bullet.type) {
+      case "normal":
+        this.ctx.fillStyle = "yellow";
+        break;
+      case "spread":
+        this.ctx.fillStyle = "orange";
+        break;
+      case "piercing":
+        this.ctx.fillStyle = "cyan";
+        break;
+      case "explosive":
+        this.ctx.fillStyle = "red";
+        break;
+    }
+
     this.ctx.fill();
     this.ctx.closePath();
   }
-
   drawPowerUpUI(availablePowerUps) {
     const uiWidth = CONFIG.powerUpUI.width;
     const uiHeight = CONFIG.powerUpUI.height;
